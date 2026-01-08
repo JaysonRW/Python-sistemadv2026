@@ -1,0 +1,28 @@
+[
+  {
+    "id": "CNT_001",
+    "cliente": "Fulano",
+    "tipo_honorario": "Inicial",
+    "area_direito": "Trabalhista",
+    "origem": "Indicação",
+    "forma_pagamento": "Pix",
+    "responsavel": "Jayson",
+    "valor_total": 25000.0,
+    "num_parcelas": 10,
+    "data_inicio": "2026-01-08",
+    "status": "ativo"
+  },
+  {
+    "id": "CNT_002",
+    "cliente": "Delane",
+    "tipo_honorario": "Mensal",
+    "area_direito": "Cível",
+    "origem": "Outros",
+    "forma_pagamento": "Cartão Crédito",
+    "responsavel": "jayson",
+    "valor_total": 5000.0,
+    "num_parcelas": 3,
+    "data_inicio": "2026-01-08",
+    "status": "ativo"
+  }
+]

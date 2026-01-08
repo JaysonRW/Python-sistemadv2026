@@ -1,0 +1,26 @@
+[
+  {
+    "id": "DSP_0",
+    "descricao": "Internet banda larga",
+    "categoria": "Pessoal",
+    "valor": 250.0,
+    "data": "2026-01-15",
+    "tipo": "Recorrente"
+  },
+  {
+    "id": "DSP_1767880323",
+    "descricao": "Aluguel escritório",
+    "categoria": "Aluguel",
+    "tipo": "Fixa",
+    "valor": 670.0,
+    "data": "2026-01-08"
+  },
+  {
+    "id": "DSP_1767880348",
+    "descricao": "Telefone Movél",
+    "categoria": "Pessoal",
+    "tipo": "Recorrente",
+    "valor": 59.9,
+    "data": "2026-01-08"
+  }
+]
