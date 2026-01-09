@@ -192,6 +192,52 @@ if menu == "📊 Dashboard":
         else:
             st.info("Sem dados de receita por área.")
 
+    # Nova Linha de Gráficos (Inadimplência e Carteira)
+    st.divider()
+    c3, c4 = st.columns(2)
+
+    with c3:
+        st.subheader("⚠️ Top 5 Inadimplentes")
+        inad_data = {}
+        for p in parcelas:
+            if p['status'] == 'em_aberto' and parse_date(p['data_vencimento']):
+                if parse_date(p['data_vencimento']) < hoje:
+                    cli = p.get('cliente', 'Desconhecido')
+                    inad_data[cli] = inad_data.get(cli, 0) + p['valor']
+        
+        if inad_data:
+            top_inad = sorted(inad_data.items(), key=lambda x: x[1], reverse=True)[:5]
+            clientes = [x[0] for x in top_inad]
+            valores = [x[1] for x in top_inad]
+            
+            fig3, ax3 = plt.subplots(figsize=(5, 3))
+            ax3.barh(clientes, valores, color='#c0392b')
+            ax3.invert_yaxis()
+            st.pyplot(fig3)
+        else:
+            st.success("Nenhuma inadimplência registrada! 🎉")
+
+    with c4:
+        st.subheader("💰 Status da Carteira (A Receber)")
+        total_atrasado = sum(inad_data.values())
+        total_a_vencer = sum(
+            p['valor'] for p in parcelas 
+            if p['status'] == 'em_aberto' 
+            and parse_date(p['data_vencimento']) 
+            and parse_date(p['data_vencimento']) >= hoje
+        )
+        
+        status_vals = [total_atrasado, total_a_vencer]
+        status_labels = ['Atrasado', 'A Vencer']
+        colors = ['#c0392b', '#f1c40f']
+        
+        if sum(status_vals) > 0:
+            fig4, ax4 = plt.subplots(figsize=(5, 3))
+            ax4.pie(status_vals, labels=status_labels, autopct='%1.1f%%', colors=colors)
+            st.pyplot(fig4)
+        else:
+            st.info("Sem valores pendentes.")
+
 elif menu == "📝 Contratos":
     st.header("Gestão de Contratos")
     
