@@ -10,7 +10,8 @@
     "valor_total": 25000.0,
     "num_parcelas": 10,
     "data_inicio": "2026-01-08",
-    "status": "ativo"
+    "status": "ativo",
+    "telefone": "41995343245"
   },
   {
     "id": "CNT_002",

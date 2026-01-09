@@ -271,6 +271,32 @@ elif menu == "💰 Fluxo de Caixa":
         # Aplicar lógica de status
         df_parcelas['Status Visual'] = df_parcelas.apply(get_status_display, axis=1)
         
+        # Função para gerar link do WhatsApp
+        def gerar_link_whatsapp(row):
+            if row['status'] == 'paga':
+                return None
+            
+            contrato = next((c for c in contratos if c['id'] == row['contrato_id']), None)
+            telefone = contrato.get('telefone', '') if contrato else ''
+            
+            telefone_limpo = "".join(filter(str.isdigit, telefone))
+            if not telefone_limpo:
+                return None
+                
+            if len(telefone_limpo) <= 11:
+                telefone_limpo = "55" + telefone_limpo
+                
+            cliente = row['cliente']
+            valor = f"R$ {row['valor']:.2f}"
+            venc = parse_date(row['data_vencimento']).strftime('%d/%m/%Y')
+            
+            msg = f"Olá {cliente}, tudo bem? Passando para lembrar da parcela de {valor} com vencimento em {venc}. Segue a chave Pix para pagamento."
+            msg_encoded = urllib.parse.quote(msg)
+            
+            return f"https://wa.me/{telefone_limpo}?text={msg_encoded}"
+
+        df_parcelas['Link WhatsApp'] = df_parcelas.apply(gerar_link_whatsapp, axis=1)
+        
         # Filtros
         filtro_status = st.multiselect("Filtrar por Status", ["em_aberto", "paga"], default=["em_aberto"])
         
@@ -285,10 +311,11 @@ elif menu == "💰 Fluxo de Caixa":
         
         # Exibição
         st.dataframe(
-            df_view[['id', 'cliente', 'valor', 'data_vencimento', 'Status Visual']],
+            df_view[['id', 'cliente', 'valor', 'data_vencimento', 'Status Visual', 'Link WhatsApp']],
             column_config={
                 "valor": st.column_config.NumberColumn("Valor", format="R$ %.2f"),
                 "Status Visual": st.column_config.TextColumn("Status", help="Estado atual da parcela"),
+                "Link WhatsApp": st.column_config.LinkColumn("Cobrar 💬", display_text="Enviar Mensagem"),
             },
             use_container_width=True,
             hide_index=True
@@ -352,3 +379,60 @@ elif menu == "📉 Despesas":
             use_container_width=True,
             hide_index=True
         )
+
+elif menu == "👥 Clientes":
+    st.header("👥 Ranking & Score de Clientes")
+    st.info("⭐ O score é calculado com base na pontualidade (50%), volume financeiro (30%) e tempo de casa (20%).")
+    
+    if contratos:
+        # Obter lista única de clientes
+        clientes_unicos = list(set(c['cliente'] for c in contratos))
+        clientes_unicos.sort()
+        
+        # Ordenar clientes por score (melhores primeiro)
+        ranking = []
+        for cli in clientes_unicos:
+            ranking.append({
+                "nome": cli,
+                "dados": calcular_score_cliente(cli, contratos, parcelas)
+            })
+        
+        # Sort by score desc
+        ranking.sort(key=lambda x: x['dados']['score'], reverse=True)
+        
+        for item in ranking:
+            cli = item['nome']
+            dados = item['dados']
+            
+            with st.expander(f"{cli} | {dados['estrelas']} ({dados['nivel']})"):
+                c1, c2 = st.columns([1, 3])
+                with c1:
+                    st.metric("Pontuação", f"{dados['score']}/100")
+                    st.markdown(f"<h2 style='color: {dados['cor']}; margin:0; padding:0;'>{dados['estrelas']}</h2>", unsafe_allow_html=True)
+                
+                with c2:
+                    st.write("**Análise do Cliente:**")
+                    for det in dados['detalhes']:
+                        st.markdown(f"- {det}")
+                    st.caption(f"💰 Total Pago Acumulado: {format_currency(dados['total_pago'])}")
+                
+                # Timeline / Histórico
+                with st.expander("📜 Histórico do Cliente"):
+                    timeline = gerar_timeline_cliente(cli, contratos, parcelas)
+                    if not timeline:
+                        st.info("Nenhum evento registrado.")
+                    else:
+                        for evento in timeline:
+                            st.markdown(f"""
+                            <div style="margin-bottom: 15px; border-left: 4px solid {evento['cor']}; padding-left: 10px; background-color: #f8f9fa; padding: 10px; border-radius: 0 5px 5px 0;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <strong>{evento['icone']} {evento['titulo']}</strong>
+                                    <small style="color: #666;">{evento['data'].strftime('%d/%m/%Y')}</small>
+                                </div>
+                                <div style="font-size: 0.9em; margin-top: 5px; color: #333;">
+                                    {evento['descricao']}
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
+    else:
+        st.warning("Nenhum cliente com contrato ativo encontrado.")
